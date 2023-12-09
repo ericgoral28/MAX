@@ -6,18 +6,21 @@ indicator("Maximum Overdrive", "MAX", overlay = true)
 
 //MAIN
 bool _showhlmabands = input.bool(false, "Show High/Low Aggregate Bands?", group = "Switches")
-bool _showhldevbands = input.bool(false, "Show High/Low Deviation Bands?", tooltip = string("Associated with Dev. % Setting"), group = "Switches")
-bool _showhlma = input.bool(false, "Show High/Low Aggregate Moving Average?", tooltip = string("Associated with Color Fill Setting"), group = "Switches")
-bool _showvwap = input.bool(false, "Show Session VWAP?", tooltip = string("Associated with Color Fill Setting"), group = "Switches")
-bool _3 = input.bool(false, "Show Moving Average 1 & 2?", tooltip = string("Associated with Color Fill Setting"), group = "Switches")
-bool _6 = input.bool(false, "Show Moving Average 3?", tooltip = string("Associated with Color Fill Setting"), group = "Switches")
+bool _showhlma = input.bool(false, "Show High/Low Aggregate Moving Average?", tooltip = string("Associated with Color Fill Settings"), group = "Switches")
+bool _showhldevbands = input.bool(false, "Show High/Low Deviation Bands?", tooltip = string("Associated with Dev. % Settings"), group = "Switches")
+bool _showvwap = input.bool(false, "Show Session VWAP?", tooltip = string("Associated with Color Fill Settings"), group = "Switches")
+bool _3 = input.bool(false, "Show Moving Average 1 & 2?", tooltip = string("Associated with Color Fill Settings"), group = "Switches")
+bool _6 = input.bool(false, "Show Moving Average 3?", tooltip = string("Associated with Color Fill Settings"), group = "Switches")
 bool _glow = input.bool(false, "Color Fill?", group = "Switches")
 bool _darkmode = input.bool(false, "DarkMode?", group = "Switches")
+bool _showtd = input.bool(true, "Show Trade Data?", tooltip = string("Associated with Position Settings"), group = "Switches")
+bool _extend = input.bool(true, "Extend Trade Data?", tooltip = string("Associated with Position Settings"), group = "Switches")
 
 string typeMA11 = string("EMA")
 string typeMA21 = string("SMA")
 int smoothingLength1 = int(5)
-float _deviationpercentile = input.float(1.01, minval = 1, step = 0.001, title =  "Dev. %", group = "Settings")
+float _deviationpercentile = input.float(1.01, minval = 1, step = 0.001, title =  "Dev. %", group = "Dev. % Settings")
+
 //MOVING AVERAGES
 ma11(source, length, type) =>
     switch type
@@ -36,12 +39,13 @@ _smoothedma4 = ma21(_ma4, smoothingLength1, typeMA21)
 _smoothedma6 = ma21(_ma6, smoothingLength1, typeMA21)
 
 //VWAP
-vwapAnchorInput = timeframe.isdwm ? string("Quarterly") : timeframe.period == "60" ? string("Weekly") : timeframe.period == "120" ? string("Monthly") : timeframe.period == "240" ? string("Quarterly") : string("Daily")
+vwapAnchorInput = timeframe.period == "M" ? string("Yearly") : timeframe.period == "W" ? string("Yearly") : timeframe.period == "D" ? string("Quarterly") : timeframe.period == "240" ? string("Monthly") : timeframe.period == "120" ? string("Weekly") : string("Daily")
 anchorTimeframe = switch vwapAnchorInput
     "Daily"   => "1D"
     "Weekly" => "1W"
     "Monthly" => "1M"
     "Quarterly" => "3M"
+    "Yearly" => "12M"
 anchor = timeframe.change(anchorTimeframe)
 
 _vwap = ta.vwap(hlc3, anchor)
@@ -92,3 +96,48 @@ fill(g, z, _glow ? _vwap > hlcc4 ? color.rgb(255, 0, 0, 90) : color.rgb(0, 255, 
 fill(h, z, _glow ? _median2 > hlcc4 ? color.rgb(255, 0, 0, 90) : color.rgb(0, 255, 0, 90) : na, "Color Fill")
 fill(d, z, _glow ? _smoothedma3 and _smoothedma4 > hlcc4 ? color.rgb(255, 0, 255, 75) : color.rgb(0, 255, 255, 75) : na, "Color Fill")
 fill(c, d, _glow ? _smoothedma4 > _smoothedma3 ? color.rgb(255, 0, 0, 50) : color.rgb(0, 255, 0, 50) : na, "Color Fill")
+
+//TRADE
+_lookback2 = int(200)
+_labeldev = input.int(15, "Label Offset", minval=0, maxval=500, step=5, tooltip = string("Associated with Position Settings"), group = "Label Offset")
+
+var float _entry = input.float(0.0, "Entry", group="Position Settings")
+var float _liquidation = input.float(0.0, "Liquidation", group="Position Settings")
+var float _stop = input.float(0.0, "Stop Loss", group="Position Settings")
+var float _takeprofit = input.float(0.0, "Take Profit", group="Position Settings")
+
+var line _line1 = na
+var line _line2 = na
+var line _line3 = na
+var line _line4 = na
+
+var label _line1lbl1 = na
+var label _line2lbl2 = na
+var label _line3lbl3 = na
+var label _line4lbl4 = na
+
+if _showtd == true
+
+    if _entry > 0
+        _line1 := line.new(bar_index[_lookback2], _entry, bar_index + _labeldev - 10, _entry, extend= _extend ? extend.left : extend.none, color=color.new(#0020ff,0), style=line.style_dashed, width=1)
+        line.delete(_line1[1])
+        _line1lbl1 := label.new(x = bar_index + _labeldev, y = _entry, text = string("Entry"), style = label.style_label_left, color = color.rgb(0,0,0,100), textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
+        label.delete(_line1lbl1[1])
+
+    if _liquidation > 0
+        _line2 := line.new(bar_index[_lookback2], _liquidation, bar_index + _labeldev - 10, _liquidation, extend= _extend ? extend.left : extend.none, color=color.new(#930bb9, 0), style=line.style_dashed, width=1)
+        line.delete(_line2[1])
+        _line2lbl2 := label.new(x = bar_index + _labeldev, y = _liquidation, text = string("Liquidation"), style = label.style_label_left, color = color.rgb(0,0,0,100), textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
+        label.delete(_line2lbl2[1])
+
+    if _stop > 0
+        _line3 := line.new(bar_index[_lookback2], _stop, bar_index + _labeldev - 10, _stop, extend= _extend ? extend.left : extend.none, color=color.new(#b40707, 0), style=line.style_dashed, width=1)
+        line.delete(_line3[1])
+        _line3lbl3 := label.new(x = bar_index + _labeldev, y = _stop, text = string("Stop"), style = label.style_label_left, color = color.rgb(0,0,0,100), textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
+        label.delete(_line3lbl3[1])
+
+    if _takeprofit > 0
+        _line4 := line.new(bar_index[_lookback2], _takeprofit, bar_index + _labeldev - 10, _takeprofit, extend= _extend ? extend.left : extend.none, color=color.new(#068e2a, 0), style=line.style_dashed, width=1)
+        line.delete(_line4[1])
+        _line4lbl4 := label.new(x = bar_index + _labeldev, y = _takeprofit, text = string("Take Profit"), style = label.style_label_left, color = color.rgb(0,0,0,100), textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
+        label.delete(_line4lbl4[1])
