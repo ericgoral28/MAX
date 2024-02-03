@@ -5,12 +5,13 @@
 indicator("Maximum Overdrive", "MAX", overlay = true)
 
 //MAIN
-bool _3 = input.bool(true, "Show Moving Average 1 & 2?", tooltip = string("Associated with Color Fill Settings"), group = "Switches")
-bool _6 = input.bool(true, "Show Moving Average 3?", tooltip = string("Associated with Color Fill Settings"), group = "Switches")
-bool _glow = input.bool(true, "Color Fill?", group = "Switches")
-bool _darkmode = input.bool(false, "DarkMode?", group = "Switches")
-bool _showtd = input.bool(true, "Show Trade Data?", tooltip = string("Associated with Position Settings"), group = "Switches")
-bool _extend = input.bool(true, "Extend Trade Data?", tooltip = string("Associated with Position Settings"), group = "Switches")
+bool _3 = input.bool(true, "Show Moving Average 1 & 2?", tooltip = string("21/30 EMA smoothed by 5SMA, associated with Color Fill Settings"), group = "On/Off")
+bool _6 = input.bool(true, "Show Moving Average 3?", tooltip = string("200 EMA smoothed by 5SMA"), group = "On/Off")
+bool _gridsplit = input.bool(false, "Show GridSplit?", tooltip = string("An Additional Price Tracking Tool"), group = "GridSplit Tool")
+bool _totaltable = input.bool(true, "Show Total Table?", group = "On/Off")
+bool _glow = input.bool(true, "Color Fill?", group = "On/Off")
+bool _darkmode = input.bool(false, "DarkMode?", group = "On/Off")
+bool _upscale = input.bool(false, "Make Charts Bigger?", group = "On/Off")
 
 string typeMA11 = string("EMA")
 string typeMA21 = string("SMA")
@@ -43,7 +44,6 @@ fill(c, d, _glow ? _smoothedma4 > _smoothedma3 ? color.rgb(255, 0, 0, 50) : colo
 
 //TRADE
 _lookback2 = int(200)
-_labeldev = input.int(15, "Label Offset", minval=0, maxval=500, step=5, tooltip = string("Associated with Position Settings"), group = "Label Offset")
 
 var float _entry = input.float(0.0, "Entry", group="Position Settings")
 var float _liquidation = input.float(0.0, "Liquidation", group="Position Settings")
@@ -60,28 +60,106 @@ var label _line2lbl2 = na
 var label _line3lbl3 = na
 var label _line4lbl4 = na
 
+bool _showtd = input.bool(true, "Show Trade Data?", tooltip = string("Associated with Position Settings"), group="Position Settings")
+bool _extend = input.bool(true, "Extend Trade Data?", tooltip = string("Associated with Position Settings"), group="Position Settings")
+int _labeldev = input.int(15, "Label Offset", minval=0, maxval=500, step=1, tooltip = string("Associated with Position Settings"), group = "Position Settings")
+
 if _showtd == true
 
     if _entry > 0
-        _line1 := line.new(bar_index[_lookback2], _entry, bar_index + _labeldev - 10, _entry, extend= _extend ? extend.left : extend.none, color=color.new(#0020ff,0), style=line.style_dashed, width=1)
+        _line1 := line.new(bar_index[_lookback2], _entry, bar_index + _labeldev, _entry, extend= _extend ? extend.left : extend.none, color=color.new(#0020ff,0), style=line.style_dashed, width=1)
         line.delete(_line1[1])
-        _line1lbl1 := label.new(x = bar_index + _labeldev, y = _entry, text = string("Entry"), style = label.style_label_left, color = color.rgb(0,0,0,100), 	textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
+        _line1lbl1 := label.new(x = bar_index + _labeldev, y = _entry, text = string("Entry"), style = label.style_label_left, color = color.rgb(0,0,0,100), textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
         label.delete(_line1lbl1[1])
 
     if _liquidation > 0
-        _line2 := line.new(bar_index[_lookback2], _liquidation, bar_index + _labeldev - 10, _liquidation, extend= _extend ? extend.left : extend.none, 	color=color.new(#930bb9, 0), style=line.style_dashed, width=1)
+        _line2 := line.new(bar_index[_lookback2], _liquidation, bar_index + _labeldev, _liquidation, extend= _extend ? extend.left : extend.none, color=color.new(#930bb9, 0), style=line.style_dashed, width=1)
         line.delete(_line2[1])
         _line2lbl2 := label.new(x = bar_index + _labeldev, y = _liquidation, text = string("Liquidation"), style = label.style_label_left, color = 	color.rgb(0,0,0,100), textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
         label.delete(_line2lbl2[1])
 
     if _stop > 0
-        _line3 := line.new(bar_index[_lookback2], _stop, bar_index + _labeldev - 10, _stop, extend= _extend ? extend.left : extend.none, 	color=color.new(#b40707, 0), style=line.style_dashed, width=1)
+        _line3 := line.new(bar_index[_lookback2], _stop, bar_index + _labeldev, _stop, extend= _extend ? extend.left : extend.none, 	color=color.new(#b40707, 0), style=line.style_dashed, width=1)
         line.delete(_line3[1])
-        _line3lbl3 := label.new(x = bar_index + _labeldev, y = _stop, text = string("Stop"), style = label.style_label_left, color = color.rgb(0,0,0,100), 	textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
+        _line3lbl3 := label.new(x = bar_index + _labeldev, y = _stop, text = string("Stop"), style = label.style_label_left, color = color.rgb(0,0,0,100), textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
         label.delete(_line3lbl3[1])
 
     if _takeprofit > 0
-        _line4 := line.new(bar_index[_lookback2], _takeprofit, bar_index + _labeldev - 10, _takeprofit, extend= _extend ? extend.left : extend.none, 	color=color.new(#068e2a, 0), style=line.style_dashed, width=1)
+        _line4 := line.new(bar_index[_lookback2], _takeprofit, bar_index + _labeldev, _takeprofit, extend= _extend ? extend.left : extend.none, color=color.new(#068e2a, 0), style=line.style_dashed, width=1)
         line.delete(_line4[1])
-        _line4lbl4 := label.new(x = bar_index + _labeldev, y = _takeprofit, text = string("Take Profit"), style = label.style_label_left, color = 	color.rgb(0,0,0,100), textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
+        _line4lbl4 := label.new(x = bar_index + _labeldev, y = _takeprofit, text = string("Take Profit"), style = label.style_label_left, color = color.rgb(0,0,0,100), textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
         label.delete(_line4lbl4[1])
+
+_totalvalue = volume * close
+_totalvalue1 = volume[1] * close[1]
+
+_totalvolume = volume
+_totalvolume1 = volume[1]
+
+var table _table3 = na
+if _totaltable == true
+    _table3 := table.new(position.bottom_right, 50, 50, color.rgb(0,0,0,0), color.white, 1, color.gray, 1)
+
+    table.cell(_table3, 0, 0,
+     string("Previous Bar Value"), text_color = color.white, text_size = _upscale ? size.small : size.tiny, text_halign = text.align_center)
+    table.cell(_table3, 0, 1, str.tostring(_totalvalue1, "$#,###"), text_color = color.white, text_size = _upscale ? size.small : size.tiny, text_halign = text.align_center)
+
+    table.cell(_table3, 1, 0,
+     string("Current Bar Value"), text_color = color.white, text_size = _upscale ? size.small : size.tiny, text_halign = text.align_center)
+    table.cell(_table3, 1, 1, str.tostring(_totalvalue, "$#,###"), text_color = color.white, text_size = _upscale ? size.small : size.tiny, text_halign = text.align_center)
+
+    table.cell(_table3, 0, 2, str.tostring(_totalvolume1, "#,###.### shares"), text_color = color.white, text_size = _upscale ? size.small : size.tiny, text_halign = text.align_center)
+    table.cell(_table3, 1, 2, str.tostring(_totalvolume, "#,###.### shares"), text_color = color.white, text_size = _upscale ? size.small : size.tiny, text_halign = text.align_center)
+
+//SWITCH
+int _lookback1 = int(200)
+bool _forward = input.bool(true, "Forward Print?", group = "GridSplit Tool")
+
+//ARRAY
+_highs = array.new<float>(0)
+_lows = array.new<float>(0)
+
+for i = 0 to _lookback1
+    array.push(_highs, high[i])
+    array.push(_lows, low[i])
+array.sort(_highs, order.descending)
+array.sort(_lows, order.ascending)
+
+//VAR
+var line _highline1 = na
+var line _highline3 = na
+var line _lowline1 = na
+var line _lowline3 = na
+var line _medianhigh = na
+var line _medianlow = na
+var box _contentionbox = na 
+
+//GRAB
+_high1 = array.get(_highs, 0)
+_high2 = array.get(_highs, 100)
+_high3 = array.get(_highs, 200)
+_low1 = array.get(_lows, 0)
+_low2 = array.get(_lows, 100)
+_low3 = array.get(_lows, 200)
+_median1 = math.avg(_low1, _low2)
+_median2 = math.avg(_high1, _high2)
+
+//PRINT
+if barstate.isconfirmed and _gridsplit == true
+
+    _highline1 := line.new(_forward ? bar_index - 10 : bar_index[_lookback1], _high1, _forward ? bar_index + 10 : bar_index + 5, _high1, extend = extend.none, color = _darkmode ? color.rgb(255,255,255,0) : color.rgb(0, 0, 0), style = line.style_solid, width = 1)
+    _lowline3 := line.new(_forward ? bar_index - 10 : bar_index[_lookback1], _low3, _forward ? bar_index + 10 : bar_index + 5, _low3, extend =extend.none, color = _darkmode ? color.rgb(255,255,255,0) : color.rgb(0, 0, 0), style = line.style_solid, width = 1)
+    _lowline1 := line.new(_forward ? bar_index - 10 : bar_index[_lookback1], _low1, _forward ? bar_index + 10 : bar_index + 5, _low1, extend = extend.none, color = _darkmode ? color.rgb(255,255,255,0) : color.rgb(0, 0, 0), style = line.style_solid, width = 1)
+    _highline3 := line.new(_forward ? bar_index - 10 : bar_index[_lookback1], _high3, _forward ? bar_index + 10 : bar_index + 5, _high3, extend = extend.none, color = _darkmode ? color.rgb(255,255,255,0) : color.rgb(0, 0, 0), style = line.style_solid, width = 1)
+    _medianhigh := line.new(_forward ? bar_index - 10 : bar_index[_lookback1], _median1, _forward ? bar_index + 10 : bar_index + 5, _median1, extend = extend.none, color = _darkmode ? color.rgb(255,255,255,0) : color.rgb(0, 0, 0), style = line.style_dashed, width = 1)
+    _medianlow := line.new(_forward ? bar_index - 10 : bar_index[_lookback1], _median2, _forward ? bar_index + 10 : bar_index + 5, _median2, extend = extend.none, color = _darkmode ? color.rgb(255,255,255,0) : color.rgb(0, 0, 0), style = line.style_dashed, width = 1)
+    _contentionbox := box.new(_forward ? bar_index - 10 : bar_index[_lookback1], _high2, _forward ? bar_index + 10 : bar_index + 5 , _low2, border_color = _darkmode ? color.rgb(255,255,255,0) : color.rgb(0, 0, 0), bgcolor = close > _high2 ? color.rgb(0,255,0,75) : close < _low2 ? color.rgb(255,0,0,75) : color.rgb(255,255,0,75), extend = extend.none)
+
+    line.delete(_highline1[1])
+    line.delete(_highline3[1])
+    line.delete(_lowline1[1])
+    line.delete(_lowline3[1])
+    line.delete(_medianhigh[1])
+    line.delete(_medianlow[1])
+    box.delete(_contentionbox[1])
+
