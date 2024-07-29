@@ -24,14 +24,20 @@
 
 
 indicator("Maximum Overdrive", "MAX", overlay = true)
+import TradingView/ta/7
 
 //MAIN
-bool _3 = input.bool(true, "Show Moving Average 1 & 2?", tooltip = string("21/30 EMA smoothed by 5SMA, associated with Color Fill Settings"), group = "On/Off")
-bool _6 = input.bool(true, "Show Moving Average 3?", tooltip = string("200 EMA smoothed by 5SMA"), group = "On/Off")
+bool _3 = input.bool(true, "Show Moving Average 1?", tooltip = string("Associated with Color Fill Settings, and Short Moving Average Type"), group = "On/Off")
+bool _4 = input.bool(true, "Show Moving Average 2?", tooltip = string("Associated with Color Fill Settings, and Short Moving Average Type"), group = "On/Off")
+
+bool _5 = input.bool(true, "Show Moving Average 3?", tooltip = string("Associated with Long Moving Average Type"), group = "On/Off")
+bool _6 = input.bool(true, "Show Moving Average 4?", tooltip = string("Associated with Long Moving Average Type"), group = "On/Off")
 bool _glow = input.bool(true, "Color Fill?", group = "On/Off")
 bool _darkmode = input.bool(false, "DarkMode?", group = "On/Off")
 
-string typeMA11 = string("EMA")
+string typeMA111 = input.string("EMA", "Short Moving Average Type", ["EMA", "SMA", "RMA", "VWMA", "DEMA", "HMA", "WMA"], group = "Moving Average Type")
+string typeMA11 = input.string("EMA", "Long Moving Average Type", ["EMA", "SMA", "RMA", "VWMA", "DEMA", "HMA", "WMA"], group = "Moving Average Type")
+
 string typeMA21 = string("SMA")
 int smoothingLength1 = int(5)
 
@@ -39,23 +45,42 @@ int smoothingLength1 = int(5)
 ma11(source, length, type) =>
     switch type
         "EMA" => ta.ema(source, length)
+        "SMA" => ta.sma(source, length)
+        "RMA" => ta.rma(source, length)
+        "VWMA" => ta.vwma(source, length)
+        "DEMA" => ta.dema(source, length)
+        "HMA" => ta.hma(source, length)
+        "WMA" => ta.wma(source, length)
+
+ma111(source, length, type) =>
+    switch type
+        "EMA" => ta.ema(source, length)
+        "SMA" => ta.sma(source, length)
+        "RMA" => ta.rma(source, length)
+        "VWMA" => ta.vwma(source, length)
+        "DEMA" => ta.dema(source, length)
+        "HMA" => ta.hma(source, length)
+        "WMA" => ta.wma(source, length)
 
 ma21(source, length, type) =>
     switch type
         "SMA" => ta.sma(source, length)
 
-_ma3 = ma11(close, int(21), typeMA11)
-_ma4 = ma11(close, int(30), typeMA11)
-_ma6 = ma11(close, int(200), typeMA11)
+_ma3 = ma111(close, input.int(21, "Moving Average Period 1", minval = 1, maxval = 4999, step = 1, group = "MA Periods"), typeMA111)
+_ma4 = ma111(close, input.int(30, "Moving Average Period 2", minval = 1, maxval = 4999, step = 1, group = "MA Periods"), typeMA111)
+_ma5 = ma11(close, input.int(100, "Moving Average Period 3", minval = 1, maxval = 4999, step = 1, group = "MA Periods"), typeMA11)
+_ma6 = ma11(close, input.int(200, "Moving Average Period 4", minval = 1, maxval = 4999, step = 1, group = "MA Periods"), typeMA11)
 
 _smoothedma3 = ma21(_ma3, smoothingLength1, typeMA21)
 _smoothedma4 = ma21(_ma4, smoothingLength1, typeMA21)
+_smoothedma5 = ma21(_ma5, smoothingLength1, typeMA21)
 _smoothedma6 = ma21(_ma6, smoothingLength1, typeMA21)
 
 //MA PLOTS
-c = plot(_3 ? _smoothedma3 : na, "Smoothed MA 1", color = _darkmode ? color.rgb(255,255,255,55) : color.rgb(0,0,0,55), linewidth = 1, style = plot.style_line)
-d = plot(_3 ? _smoothedma4 : na, "Smoothed MA 2", color = _darkmode ? color.rgb(255,255,255,45) : color.rgb(0,0,0,45), linewidth = 1, style = plot.style_line)
-f = plot(_6 ? _smoothedma6 : na, "Smoothed MA 3", color = _darkmode ? color.rgb(255,255,255,25) : color.rgb(0,0,0,25), linewidth = 1, style = plot.style_line)
+c = plot(_3 ? _smoothedma3 : na, "Smoothed MA 1", color = _darkmode ? color.rgb(255,255,255,0) : color.rgb(0,0,0,0), linewidth = 1, style = plot.style_line)
+d = plot(_4 ? _smoothedma4 : na, "Smoothed MA 2", color = _darkmode ? color.rgb(255,255,255,0) : color.rgb(0,0,0,0), linewidth = 1, style = plot.style_line)
+e = plot(_5 ? _smoothedma5 : na, "Smoothed MA 3", color = _darkmode ? color.rgb(255,255,255,0) : color.rgb(0,0,0,0), linewidth = 1, style = plot.style_line)
+f = plot(_6 ? _smoothedma6 : na, "Smoothed MA 4", color = _darkmode ? color.rgb(255,255,255,0) : color.rgb(0,0,0,0), linewidth = 1, style = plot.style_line)
 z = plot(close, display = display.none)
 //COLOR FILLS
 fill(c, d, _glow ? _smoothedma4 > _smoothedma3 ? color(color.rgb(255, 0, 0, 75)) : color(color.rgb(0, 255, 0, 75)) : na, "Color Fill")
