@@ -8,15 +8,6 @@
 //
 //                                                                      Maximum Overdrive indicator
 //
-//                       This indicator simply allows the user to witness the 21 Exponential Moving Average [Smoothed by 5 Simple Moving Average],
-//                       the 30 Exponential Moving Average [Smoothed by 5 Simple Moving Average], and the 200 Exponential Moving Average [Smoothed,
-//                       by 5 Simple Moving Average]. The indicator also allows you to portray 2 separate trade setups, whether they are both long;
-//                       or short, or one long vs. one short. Sometimes it is hard to link a Defi-Exchange to Tradingview but we like their data.
-//                       There is a label offset option to adjust your positioning paint per timeframe as you go up, you can also extend your trade
-//                       data to create a line [Support/Resistance Relevance], and you can remove your trade data without having to re-enter your 
-//                       trade data values. ColorFill can be changed to specs for individuals under Style, has a DarkMode vs. LightMode for EMA's and
-//                       trade data. 
-//                       
 //                                                                                Enjoy
 //
 //                                                                          Mr. Storm [LvNThL]
@@ -29,17 +20,14 @@ import TradingView/ta/7
 //MAIN
 bool _3 = input.bool(true, "Show Moving Average 1?", tooltip = string("Associated with Color Fill Settings, and Short Moving Average Type"), group = "On/Off")
 bool _4 = input.bool(true, "Show Moving Average 2?", tooltip = string("Associated with Color Fill Settings, and Short Moving Average Type"), group = "On/Off")
-
 bool _5 = input.bool(true, "Show Moving Average 3?", tooltip = string("Associated with Long Moving Average Type"), group = "On/Off")
-bool _6 = input.bool(true, "Show Moving Average 4?", tooltip = string("Associated with Long Moving Average Type"), group = "On/Off")
-bool _glow = input.bool(true, "Color Fill?", group = "On/Off")
-bool _darkmode = input.bool(false, "DarkMode?", group = "On/Off")
+bool _darkmode = input.bool(false, "Darkmode?", group = "On/Off")
 
 string typeMA111 = input.string("EMA", "Short Moving Average Type", ["EMA", "SMA", "RMA", "VWMA", "DEMA", "HMA", "WMA"], group = "Moving Average Type")
-string typeMA11 = input.string("EMA", "Long Moving Average Type", ["EMA", "SMA", "RMA", "VWMA", "DEMA", "HMA", "WMA"], group = "Moving Average Type")
+string typeMA11 = input.string("HMA", "Long Moving Average Type", ["EMA", "SMA", "RMA", "VWMA", "DEMA", "HMA", "WMA"], group = "Moving Average Type")
 
 string typeMA21 = string("SMA")
-int smoothingLength1 = int(5)
+int smoothingLength1 = int(9)
 
 //MOVING AVERAGES
 ma11(source, length, type) =>
@@ -66,118 +54,19 @@ ma21(source, length, type) =>
     switch type
         "SMA" => ta.sma(source, length)
 
-_ma3 = ma111(close, input.int(21, "Moving Average Period 1", minval = 1, maxval = 4999, step = 1, group = "MA Periods"), typeMA111)
-_ma4 = ma111(close, input.int(30, "Moving Average Period 2", minval = 1, maxval = 4999, step = 1, group = "MA Periods"), typeMA111)
-_ma5 = ma11(close, input.int(100, "Moving Average Period 3", minval = 1, maxval = 4999, step = 1, group = "MA Periods"), typeMA11)
-_ma6 = ma11(close, input.int(200, "Moving Average Period 4", minval = 1, maxval = 4999, step = 1, group = "MA Periods"), typeMA11)
+_ma3 = ma111(close, input.int(50, "Moving Average Period 1", minval = 1, maxval = 4999, step = 1, group = "MA Periods"), typeMA111)
+_ma4 = ma111(close, input.int(100, "Moving Average Period 2", minval = 1, maxval = 4999, step = 1, group = "MA Periods"), typeMA111)
+_ma5 = ma11(close, input.int(900, "Moving Average Period 3", minval = 1, maxval = 4999, step = 1, group = "MA Periods"), typeMA11)
 
 _smoothedma3 = ma21(_ma3, smoothingLength1, typeMA21)
 _smoothedma4 = ma21(_ma4, smoothingLength1, typeMA21)
 _smoothedma5 = ma21(_ma5, smoothingLength1, typeMA21)
-_smoothedma6 = ma21(_ma6, smoothingLength1, typeMA21)
 
 //MA PLOTS
-c = plot(_3 ? _smoothedma3 : na, "Smoothed MA 1", color = _darkmode ? color.rgb(255,255,255,0) : color.rgb(0,0,0,0), linewidth = 1, style = plot.style_line)
-d = plot(_4 ? _smoothedma4 : na, "Smoothed MA 2", color = _darkmode ? color.rgb(255,255,255,0) : color.rgb(0,0,0,0), linewidth = 1, style = plot.style_line)
+c = plot(_3 ? _smoothedma3 : na, "Smoothed MA 1", color = _smoothedma3 >= _smoothedma4 ? #00b000 : #b22222, linewidth = 2, style = plot.style_line)
+d = plot(_4 ? _smoothedma4 : na, "Smoothed MA 2", color = _smoothedma4 >= _smoothedma3 ? _darkmode ? #ffffff : #000000 : _darkmode ? #ffffff : #000000, linewidth = 1, style = plot.style_line)
 e = plot(_5 ? _smoothedma5 : na, "Smoothed MA 3", color = _darkmode ? color.rgb(255,255,255,0) : color.rgb(0,0,0,0), linewidth = 1, style = plot.style_line)
-f = plot(_6 ? _smoothedma6 : na, "Smoothed MA 4", color = _darkmode ? color.rgb(255,255,255,0) : color.rgb(0,0,0,0), linewidth = 1, style = plot.style_line)
 z = plot(close, display = display.none)
+
 //COLOR FILLS
-fill(c, d, _glow ? _smoothedma4 > _smoothedma3 ? color(color.rgb(255, 0, 0, 75)) : color(color.rgb(0, 255, 0, 75)) : na, "Color Fill")
-// fill(z, f, _glow ? close > _smoothedma6 ? color(color.rgb(0, 255, 0, 50)) : color(color.rgb(255, 0, 0, 50)) : na, "Color Fill")
-
-//TRADE
-_lookback2 = int(200)
-
-bool _entclick1 = input.bool(true, "", group = "Short Position Settings", inline = "Entry1")
-bool _liqclick1 = input.bool(true, "", group = "Short Position Settings", inline = "Liquidation1")
-bool _stopclick1 = input.bool(true, "", group = "Short Position Settings", inline = "Stop1")
-bool _takeclick1 = input.bool(true, "", group = "Short Position Settings", inline = "Take1")
-var float _entry = input.float(0.0, "Entry", group= "Short Position Settings", inline = "Entry1")
-var float _liquidation = input.float(0.0, "Liquidation", group="Short Position Settings", inline = "Liquidation1")
-var float _stop = input.float(0.0, "Stop Loss", group="Short Position Settings", inline = "Stop1")
-var float _takeprofit = input.float(0.0, "Take Profit", group="Short Position Settings", inline = "Take1")
-
-var line _line1 = na
-var line _line2 = na
-var line _line3 = na
-var line _line4 = na
-
-var label _line1lbl1 = na
-var label _line2lbl2 = na
-var label _line3lbl3 = na
-var label _line4lbl4 = na
-
-bool _entclick2 = input.bool(true, "", group = "Long Position Settings", inline = "Entry2")
-bool _liqclick2 = input.bool(true, "", group = "Long Position Settings", inline = "Liquidation2")
-bool _stopclick2 = input.bool(true, "", group = "Long Position Settings", inline = "Stop2")
-bool _takeclick2 = input.bool(true, "", group = "Long Position Settings", inline = "Take2")
-var float _entry2 = input.float(0.0, "Entry", group="Long Position Settings", inline = "Entry2")
-var float _liquidation2 = input.float(0.0, "Liquidation", group="Long Position Settings", inline = "Liquidation2")
-var float _stop2 = input.float(0.0, "Stop Loss", group="Long Position Settings", inline = "Stop2")
-var float _takeprofit2 = input.float(0.0, "Take Profit", group="Long Position Settings", inline = "Take2")
-
-var line _line12 = na
-var line _line22 = na
-var line _line32 = na
-var line _line42 = na
-
-var label _line1lbl12 = na
-var label _line2lbl22 = na
-var label _line3lbl32 = na
-var label _line4lbl42 = na
-
-bool _showtd = input.bool(true, "Show Trade Data?", tooltip = string("Associated with Position Settings"), group="Position Settings")
-bool _extend = input.bool(true, "Extend Trade Data?", tooltip = string("Associated with Position Settings"), group="Position Settings")
-int _labeldev = input.int(15, "Label Offset", minval=0, maxval=500, step=1, tooltip = string("Associated with Position Settings"), group = "Position Settings")
-
-if _showtd == true
-
-    if _entry > 0
-        _line1 := line.new(bar_index[_lookback2], _entry, bar_index + _labeldev, _entry, extend= _extend ? extend.left : extend.none, color= _entclick1 ? color.new(#0020ff,0) : na, style=line.style_dashed, width=1)
-        line.delete(_line1[1])
-        _line1lbl1 := label.new(x = _entclick1 ? bar_index + _labeldev : na, y = _entry, text = string("Entry"), style = label.style_label_left, color = color.rgb(0,0,0,100), textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
-        label.delete(_line1lbl1[1])
-
-    if _liquidation > 0
-        _line2 := line.new(bar_index[_lookback2], _liquidation, bar_index + _labeldev, _liquidation, extend= _extend ? extend.left : extend.none, color= _liqclick1 ? color.new(#930bb9, 0) : na, style=line.style_dashed, width=1)
-        line.delete(_line2[1])
-        _line2lbl2 := label.new(x = _liqclick1 ? bar_index + _labeldev : na, y = _liquidation, text = string("Liquidation"), style = label.style_label_left, color = 	color.rgb(0,0,0,100), textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
-        label.delete(_line2lbl2[1])
-
-    if _stop > 0
-        _line3 := line.new(bar_index[_lookback2], _stop, bar_index + _labeldev, _stop, extend= _extend ? extend.left : extend.none, color= _stopclick1 ? color.new(#b40707, 0) : na, style=line.style_dashed, width=1)
-        line.delete(_line3[1])
-        _line3lbl3 := label.new(x = _stopclick1 ? bar_index + _labeldev : na, y = _stop, text = string("Stop"), style = label.style_label_left, color = color.rgb(0,0,0,100), textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
-        label.delete(_line3lbl3[1])
-
-    if _takeprofit > 0
-        _line4 := line.new(bar_index[_lookback2], _takeprofit, bar_index + _labeldev, _takeprofit, extend= _extend ? extend.left : extend.none, color= _takeclick1 ? color.new(#068e2a, 0) : na, style=line.style_dashed, width=1)
-        line.delete(_line4[1])
-        _line4lbl4 := label.new(x = _takeclick1 ? bar_index + _labeldev : na, y = _takeprofit, text = string("Take Profit"), style = label.style_label_left, color = color.rgb(0,0,0,100), textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
-        label.delete(_line4lbl4[1])
-
-    if _entry2 > 0
-        _line12 := line.new(bar_index[_lookback2], _entry2, bar_index + _labeldev, _entry2, extend= _extend ? extend.left : extend.none, color= _entclick2 ? color.new(#0020ff,0) : na, style=line.style_dashed, width=1)
-        line.delete(_line12[1])
-        _line1lbl12 := label.new(x = _entclick2 ? bar_index + _labeldev : na, y = _entry2, text = string("Entry"), style = label.style_label_left, color = color.rgb(0,0,0,100), textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
-        label.delete(_line1lbl12[1])
-
-    if _liquidation2 > 0
-        _line22 := line.new(bar_index[_lookback2], _liquidation2, bar_index + _labeldev, _liquidation2, extend= _extend ? extend.left : extend.none, color= _liqclick2 ? color.new(#930bb9, 0) : na, style=line.style_dashed, width=1)
-        line.delete(_line22[1])
-        _line2lbl22 := label.new(x = _liqclick2 ? bar_index + _labeldev : na, y = _liquidation2, text = string("Liquidation"), style = label.style_label_left, color = 	color.rgb(0,0,0,100), textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
-        label.delete(_line2lbl22[1])
-
-    if _stop2 > 0
-        _line32 := line.new(bar_index[_lookback2], _stop2, bar_index + _labeldev, _stop2, extend= _extend ? extend.left : extend.none, 	color= _stopclick2 ? color.new(#b40707, 0) : na, style=line.style_dashed, width=1)
-        line.delete(_line32[1])
-        _line3lbl32 := label.new(x = _stopclick2 ? bar_index + _labeldev : na, y = _stop2, text = string("Stop"), style = label.style_label_left, color = color.rgb(0,0,0,100), textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
-        label.delete(_line3lbl32[1])
-
-    if _takeprofit2 > 0
-        _line42 := line.new(bar_index[_lookback2], _takeprofit2, bar_index + _labeldev, _takeprofit2, extend= _extend ? extend.left : extend.none, color= _takeclick2 ? color.new(#068e2a, 0) : na, style=line.style_dashed, width=1)
-        line.delete(_line42[1])
-        _line4lbl42 := label.new(x = _takeclick2 ? bar_index + _labeldev : na, y = _takeprofit2, text = string("Take Profit"), style = label.style_label_left, color = color.rgb(0,0,0,100), textcolor = _darkmode ? color.white : color.rgb(0,0,0,0), size =  size.small)
-        label.delete(_line4lbl42[1])
-
+fill(c, d, _smoothedma4 > _smoothedma3 ? color(color.rgb(255, 0, 0, 75)) : color(color.rgb(0, 255, 0, 75)), "Color Fill")
